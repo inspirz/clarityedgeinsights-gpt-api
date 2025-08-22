@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-# Set your OpenAI API key here
+# Set your OpenAI API key from environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/analyze-battle', methods=['POST'])
@@ -21,7 +21,7 @@ Compare their abilities and give a 2-paragraph summary of who would win and why.
 
     try:
         response = openai.ChatCompletion.create(
-            model=os.getenv("MODEL_NAME", "gpt-5"),  # Default to gpt-5 if env var not set
+            model=os.getenv("MODEL_NAME", "gpt-5"),  # Fallback to gpt-5 if MODEL_NAME not set
             messages=[{"role": "user", "content": prompt}],
             max_tokens=500,
             temperature=0.7,
@@ -37,4 +37,6 @@ def health_check():
     return "OK", 200
 
 if __name__ == '__main__':
-    app.run()
+    port = int(os.environ.get("PORT", 10000))  # Render expects PORT env variable
+    app.run(host='0.0.0.0', port=port)
+
