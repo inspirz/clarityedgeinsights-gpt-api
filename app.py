@@ -3,34 +3,38 @@ import openai
 import os
 
 app = Flask(__name__)
+
+# Set your OpenAI API key here
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-@app.route("/gpt-summary", methods=["POST"])
-def gpt_summary():
-    data = request.json
-    hero_a = data.get("heroA")
-    hero_b = data.get("heroB")
+@app.route('/analyze-battle', methods=['POST'])
+def analyze_battle():
+    data = request.get_json()
+    hero1 = data.get("hero1")
+    hero2 = data.get("hero2")
 
-    if not hero_a or not hero_b:
-        return jsonify({"error": "Missing heroA or heroB"}), 400
+    if not hero1 or not hero2:
+        return jsonify({"error": "Both hero1 and hero2 are required"}), 400
 
-    prompt = f"""Compare the strengths, weaknesses, and likely battle outcome between {hero_a} and {hero_b}. 
-Write two insightful paragraphs based on their known abilities, personalities, and tactics."""
+    prompt = f"""You are a Marvel expert AI. Analyze a one-on-one fight between {hero1} and {hero2}. 
+Compare their abilities and give a 2-paragraph summary of who would win and why."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o",
+            model=os.getenv("MODEL_NAME", "gpt-5"),  # Default to gpt-5 if env var not set
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=300,
-            temperature=0.7
+            max_tokens=500,
+            temperature=0.7,
         )
-        return jsonify({"result": response.choices[0].message["content"]})
+        result = response.choices[0].message.content.strip()
+        return jsonify({"analysis": result})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/")
-def home():
-    return "ClarityEdge GPT API is running"
+@app.route("/healthz", methods=["GET"])
+def health_check():
+    return "OK", 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    app.run()
