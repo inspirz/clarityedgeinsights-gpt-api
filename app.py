@@ -87,4 +87,4 @@ def health_check():
 if __name__ == '__main__':
     # When deploying to Render, this block might be skipped in favor of a
     # production WSGI server like Gunicorn.
-    app.run(debug=True, port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True, port=int(os.environ.get("PORT", 1000)))
