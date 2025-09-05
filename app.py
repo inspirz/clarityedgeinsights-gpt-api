@@ -3,11 +3,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Initialize OpenAI client (compatible with openai>=1.0.0)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/analyze-battle', methods=['POST'])
@@ -17,9 +15,9 @@ def analyze_battle():
     hero2 = data.get("hero2")
 
     if not hero1 or not hero2:
-        return jsonify({"error": "Missing hero names"}), 400
+        return jsonify({"error": "Both hero1 and hero2 are required"}), 400
 
-    prompt = f"Who would win in a battle between {hero1} and {hero2}? Explain why."
+    prompt = f"Who would win in a battle between {hero1} and {hero2}? Provide a detailed explanation based on comic book lore."
 
     try:
         response = client.chat.completions.create(
@@ -27,16 +25,16 @@ def analyze_battle():
             messages=[
                 {"role": "system", "content": "You are a comic book expert."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=0.7,
+            max_tokens=500
         )
         result = response.choices[0].message.content.strip()
-        return jsonify({"analysis": result})
+        return jsonify({"analysis": result}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Failed to analyze battle: {str(e)}"}), 500
 
-# For Render deployment
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
-
+    app.run(host='0.0.0.0', port=port, debug=False)
