@@ -1,14 +1,14 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from openai import OpenAI
+import openai
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Set up OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Set OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/analyze-battle', methods=['POST'])
 def analyze_battle():
@@ -22,7 +22,7 @@ def analyze_battle():
     prompt = f"Who would win in a battle between {hero1} and {hero2}? Explain why."
 
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a comic book expert."},
