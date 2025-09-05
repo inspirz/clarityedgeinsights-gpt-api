@@ -10,7 +10,11 @@ CORS(app)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 
-# Initialize OpenAI client correctly (>=1.0.0)
+# Debug: Confirm environment variables are loading
+print(f"[DEBUG] Using model: {MODEL_NAME}")
+print(f"[DEBUG] API key present: {'Yes' if OPENAI_API_KEY else 'No'}")
+
+# Initialize OpenAI client (v1.0+)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 @app.route("/")
@@ -33,6 +37,8 @@ def analyze_battle():
             f"Who wins and why? Give a two-paragraph breakdown."
         )
 
+        print(f"[DEBUG] Prompt: {prompt}")
+
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -42,14 +48,19 @@ def analyze_battle():
             temperature=0.7
         )
 
-        # Safely extract analysis
+        # Debug: Print full response
+        print(f"[DEBUG] OpenAI response: {response}")
+
         analysis = response.choices[0].message.content.strip() if response.choices else "No analysis returned."
 
         return jsonify({"analysis": analysis})
 
     except Exception as e:
+        print(f"[ERROR] Exception occurred: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    print(f"[DEBUG] Starting app on port {port}...")
+    app.run(host="0.0.0.0", port=port)
 
