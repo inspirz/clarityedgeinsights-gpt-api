@@ -1,8 +1,12 @@
-from flask import Flask, request, jsonify
-from openai import OpenAI
 import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from openai import OpenAI
+from openai import APIError
 
+# Initialize Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Set up OpenAI client using env variable
 client = OpenAI(
@@ -20,18 +24,24 @@ def analyze_battle():
 
     try:
         response = client.chat.completions.create(
+            # Using the environment variable for the model name is a good practice.
             model=os.getenv("MODEL_NAME", "gpt-4o"),
             messages=[
                 {"role": "system", "content": "You are a Marvel expert AI."},
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
-            temperature=0.7,
+            # This parameter was changed from `max_completion_tokens` to `max_tokens`.
             max_tokens=500
         )
-        result = response.choices[0].message.content.strip()
+        result = response.choices[0].message.content
         return jsonify({"analysis": result})
 
+    except APIError as e:
+        # This block will catch specific errors from the OpenAI API,
+        # such as an invalid API key or a rate limit error.
+        return jsonify({"error": str(e)}), 500
     except Exception as e:
+        # This block will catch any other unexpected errors.
         return jsonify({"error": str(e)}), 500
 
 @app.route("/healthz", methods=["GET"])
@@ -39,5 +49,5 @@ def health_check():
     return "OK", 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Render requires this for deployment
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
