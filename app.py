@@ -24,7 +24,7 @@ def analyze_battle():
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
             temperature=0.7,
-            max_tokens=500  # ✅ This is correct for openai>=1.0.0
+            max_tokens=500 
         )
 
         result = response.choices[0].message.content.strip()
