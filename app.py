@@ -1,44 +1,90 @@
-from flask import Flask, request, jsonify
-from openai import OpenAI
 import os
+import requests
+import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
+# Initialize the Flask application
 app = Flask(__name__)
+# Enable CORS for all domains, allowing cross-origin requests
+CORS(app)
 
-# Set up OpenAI client using env variable
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+# Retrieve the OpenAI API key and API endpoint URL from environment variables
+# Note: It's crucial to set these as environment variables in your Render dashboard
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+ENDPOINT_URL = os.environ.get("ENDPOINT_URL")
 
-@app.route('/analyze-battle', methods=['POST'])
-def analyze_battle():
-    data = request.get_json()
-    hero1 = data.get("hero1")
-    hero2 = data.get("hero2")
+# Function to get a response from the LLM model
+def _get_llm_response(conversation_history):
+    """
+    Sends a request to the LLM model and returns the generated content.
+    This function has been updated to use the correct 'max_completion_tokens' parameter.
+    """
+    if not ENDPOINT_URL or not OPENAI_API_KEY:
+        # Return an error if API credentials are not set
+        return "API credentials are not set."
 
-    if not hero1 or not hero2:
-        return jsonify({"error": "Both hero1 and hero2 are required"}), 400
+    json_payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a helpful assistant."
+            }
+        ] + conversation_history,
+        # THIS IS THE CORRECTED LINE:
+        # The API requires 'max_completion_tokens' for this model, not 'max_tokens'
+        "max_completion_tokens": 150
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
 
     try:
-        response = client.chat.completions.create(
-            model=os.getenv("MODEL_NAME", "gpt-4o"),
-            messages=[
-                {"role": "system", "content": "You are a Marvel expert AI."},
-                {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
-            ],
-            temperature=0.7,
-            max_tokens=500  # ✅ This is the correct parameter for SDK >=1.0.0
-        )
-        result = response.choices[0].message.content.strip()
-        return jsonify({"analysis": result})
+        response = requests.post(ENDPOINT_URL, headers=headers, data=json.dumps(json_payload))
+        response.raise_for_status() # Raises an HTTPError for bad responses
+        response_data = response.json()
+        return response_data['choices'][0]['message']['content']
+    except requests.exceptions.HTTPError as errh:
+        return f"Http Error: {errh}"
+    except requests.exceptions.ConnectionError as errc:
+        return f"Error Connecting: {errc}"
+    except requests.exceptions.Timeout as errt:
+        return f"Timeout Error: {errt}"
+    except requests.exceptions.RequestException as err:
+        return f"Something went wrong: {err}"
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
 
+@app.route('/generate', methods=['POST'])
+def generate_text():
+    """
+    Handles the POST request to generate text.
+    It takes a conversation history from the request body and uses it to
+    get a response from the LLM model.
+    """
+    try:
+        data = request.json
+        conversation_history = data.get('conversationHistory')
+        if not conversation_history:
+            return jsonify({"error": "No conversation history provided"}), 400
+
+        llm_response = _get_llm_response(conversation_history)
+        return jsonify({"response": llm_response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/healthz", methods=["GET"])
+@app.route('/health', methods=['GET'])
 def health_check():
+    """
+    A simple health check endpoint.
+    """
     return "OK", 200
 
+# Main entry point for the application, used for local development
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Render requires this for deployment
-    app.run(host='0.0.0.0', port=port)
-
+    # When deploying to Render, this block might be skipped in favor of a
+    # production WSGI server like Gunicorn.
+    app.run(debug=True, port=int(os.environ.get("PORT", 5000)))
