@@ -30,8 +30,9 @@ def analyze_battle():
                 {"role": "system", "content": "You are a Marvel expert AI."},
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
-            # This parameter was changed from `max_completion_tokens` to `max_tokens`.
-            max_tokens=500
+            # This parameter was changed back to `max_completion_tokens`
+            # as per the error message.
+            max_completion_tokens=500
         )
         result = response.choices[0].message.content
         return jsonify({"analysis": result})
