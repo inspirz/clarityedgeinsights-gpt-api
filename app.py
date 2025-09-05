@@ -85,6 +85,6 @@ def health_check():
 
 # Main entry point for the application, used for local development
 if __name__ == '__main__':
-    # When deploying to Render, this block might be skipped in favor of a
-    # production WSGI server like Gunicorn.
-    app.run(debug=True, port=int(os.environ.get("PORT", 1000)))
+    port = int(os.environ.get("PORT", 10000))  # Render requires this for deployment
+    app.run(host='0.0.0.0', port=port)
+
