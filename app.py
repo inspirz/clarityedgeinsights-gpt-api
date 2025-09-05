@@ -25,7 +25,6 @@ def analyze_battle():
                 {"role": "system", "content": "You are a Marvel expert AI."},
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
-            temperature=0.7,
             max_completion_tokens=500
         )
         result = response.choices[0].message.content.strip()
