@@ -4,10 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# Set up OpenAI client using env variable
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+# Set up OpenAI client using environment variable
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/analyze-battle', methods=['POST'])
 def analyze_battle():
@@ -25,9 +23,11 @@ def analyze_battle():
                 {"role": "system", "content": "You are a Marvel expert AI."},
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
-            max_completion_tokens=500
+            temperature=0.7,
+            max_tokens=500  # ✅ This is correct for openai>=1.0.0
         )
-        result = response.choices[0].message.content
+
+        result = response.choices[0].message.content.strip()
         return jsonify({"analysis": result})
 
     except Exception as e:
@@ -40,5 +40,3 @@ def health_check():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))  # Render requires this for deployment
     app.run(host='0.0.0.0', port=port)
-
-
