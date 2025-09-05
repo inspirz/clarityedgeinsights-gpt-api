@@ -4,7 +4,6 @@ import os
 
 app = Flask(__name__)
 
-# Set up OpenAI client using environment variable
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/analyze-battle', methods=['POST'])
@@ -23,8 +22,7 @@ def analyze_battle():
                 {"role": "system", "content": "You are a Marvel expert AI."},
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
-            temperature=0.7,
-            max_tokens=500 
+            max_completion_tokens=500
         )
 
         result = response.choices[0].message.content.strip()
@@ -38,5 +36,5 @@ def health_check():
     return "OK", 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Render requires this for deployment
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
