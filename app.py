@@ -26,7 +26,6 @@ def analyze_battle():
                 {"role": "user", "content": f"Analyze a one-on-one fight between {hero1} and {hero2}. Compare their abilities and give a 2-paragraph summary of who would win and why."}
             ],
             max_completion_tokens=500,  # Required param for openai>=1.0.0
-            temperature=0.7
         )
 
         # DEBUG LOGS
