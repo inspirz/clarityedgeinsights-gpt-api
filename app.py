@@ -27,7 +27,7 @@ def analyze_battle():
             ],
             max_completion_tokens=500
         )
-        result = response.choices[0].message.content.strip()
+        result = response.choices[0].message.content
         return jsonify({"analysis": result})
 
     except Exception as e:
