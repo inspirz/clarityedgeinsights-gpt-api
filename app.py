@@ -1,13 +1,13 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from openai import OpenAI  # ✅ use the new OpenAI class
+from openai import OpenAI  
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Create OpenAI client (for SDK >= 1.0.0)
+# Set up OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/analyze-battle', methods=['POST'])
@@ -19,10 +19,9 @@ def analyze_battle():
     if not hero1 or not hero2:
         return jsonify({"error": "Both hero1 and hero2 are required"}), 400
 
-    prompt = f"Who would win in a battle between {hero1} and {hero2}? Provide a detailed explanation based on comic book lore."
+    prompt = f"Who would win in a battle between {hero1} and {hero2}? Provide a detailed explanation."
 
     try:
-        # ✅ New method for openai>=1.0.0
         response = client.chat.completions.create(
             model="gpt-4",  # or "gpt-4o"
             messages=[
@@ -36,9 +35,9 @@ def analyze_battle():
         return jsonify({"analysis": result})
 
     except Exception as e:
-        return jsonify({"error": f"Failed to analyze battle: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
-# Render compatibility
+# Render requirement
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port)
