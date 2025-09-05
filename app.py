@@ -34,15 +34,26 @@ def analyze_battle():
             # as per the error message.
             max_completion_tokens=500
         )
-        result = response.choices[0].message.content
-        return jsonify({"analysis": result})
+
+        # Added logging to inspect the full API response in the Render logs.
+        print(f"OpenAI API Response: {response}")
+
+        # Validate that the response contains a valid choice before trying to access it.
+        if response.choices and response.choices[0].message and response.choices[0].message.content:
+            result = response.choices[0].message.content
+            return jsonify({"analysis": result})
+        else:
+            # If the response is empty or unexpected, return a clear error.
+            return jsonify({"error": "OpenAI API returned an empty or invalid response."}), 500
 
     except APIError as e:
         # This block will catch specific errors from the OpenAI API,
         # such as an invalid API key or a rate limit error.
+        print(f"OpenAI APIError: {e}")
         return jsonify({"error": str(e)}), 500
     except Exception as e:
         # This block will catch any other unexpected errors.
+        print(f"Unexpected Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/healthz", methods=["GET"])
